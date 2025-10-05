@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ROVER WANG</title>
+<style>
+/* --- same base styles above --- */
+
+/* SEARCH BAR – inside map */
+.map-search {
+  position: absolute;
+  top: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 600px;
+  display: flex;
+  gap: 6px;
+  background: rgba(255,255,255,0.95);
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+  z-index: 10;
+}
+
+/* input & search button */
+.map-search input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+.map-search button {
+  padding: 10px 14px;
+  border: none;
+  background: #000;
+  color: #fff;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+.map-search button:hover { background: #444; }
+
+/* Clear button style */
+.clear-btn {
+  position: absolute;
+  right: 80px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  color: black;
+  border: none;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: 1.4em;
+  line-height: 1;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.clear-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Hide native search cancel button */
+#mapSearchInput::-webkit-search-cancel-button,
+#mapSearchInput::-webkit-search-decoration,
+#mapSearchInput::-webkit-search-results-button,
+#mapSearchInput::-webkit-search-results-decoration {
+  display: none;
+}
+#mapSearchInput::-ms-clear { display: none; width: 0; height: 0; }
+
+/* Suggestions dropdown */
+.suggestions {
+  position: absolute;
+  left: 0;
+  right: 120px;
+  top: 47px;
+  background: #fff;
+  border: 1px solid #ccc;
+  z-index: 1000;
+  max-height: 200px;
+  overflow-y: auto;
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.09);
+}
+.suggestions div {
+  padding: 10px 18px;
+  cursor: pointer;
+}
+.suggestions div:hover { background: #ececec; }
+</style>
+</head>
+<body>
+
+<header id="mainHeader">
+  <div class="logo">RW</div>
+  <button id="langBtn">HI</button>
+</header>
+
+<main>
+  <section id="page-maps" class="page active" style="padding:0;">
+    <div class="maps-container">
+      <form class="map-search" id="mapSearchForm" autocomplete="off" onsubmit="return false;">
+        <input type="search" id="mapSearchInput" placeholder="Search place…" autocomplete="off" />
+        <button type="submit" id="mapSearchBtn">Go</button>
+        <button type="button" class="clear-btn" id="clearInputBtn" tabindex="-1" aria-label="Clear">&times;</button>
+        <div class="suggestions" id="autocompleteSuggestions" style="display:none"></div>
+      </form>
+      <iframe id="mapFrame" class="responsive-map-iframe"
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d13230.353504310997!2d151.2100!3d-33.8570"
+        allowfullscreen loading="lazy"></iframe>
+    </div>
+  </section>
+</main>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC9MepEp1_FD6a1GBFCKYVQQjxzOlDpQ7k&libraries=places"></script>
+<script>
+const input = document.getElementById("mapSearchInput");
+const clearBtn = document.getElementById("clearInputBtn");
+const suggestionsDiv = document.getElementById("autocompleteSuggestions");
+let autocompleteService, currentSuggestions = [];
+
+if (window.google && google.maps && google.maps.places) {
+  autocompleteService = new google.maps.places.AutocompleteService();
+}
+
+// handle typing
+input.addEventListener("input", () => {
+  const val = input.value.trim();
+  if (val) clearBtn.classList.add("visible");
+  else clearBtn.classList.remove("visible");
+
+  if (!val || !autocompleteService) {
+    suggestionsDiv.style.display = "none";
+    suggestionsDiv.innerHTML = "";
+    return;
+  }
+
+  autocompleteService.getPlacePredictions({ input: val }, (predictions, status) => {
+    if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions.length) {
+      suggestionsDiv.style.display = "none";
+      suggestionsDiv.innerHTML = "";
+      return;
+    }
+    suggestionsDiv.innerHTML = "";
+    currentSuggestions = predictions;
+    predictions.forEach((p) => {
+      const div = document.createElement("div");
+      div.textContent = p.description;
+      div.onclick = () => {
+        input.value = p.description;
+        suggestionsDiv.style.display = "none";
+        openPlace(p.description);
+      };
+      suggestionsDiv.appendChild(div);
+    });
+    suggestionsDiv.style.display = "block";
+  });
+});
+
+// clear button click
+clearBtn.addEventListener("click", () => {
+  input.value = "";
+  clearBtn.classList.remove("visible");
+  suggestionsDiv.style.display = "none";
+  input.focus();
+});
+
+document.getElementById("mapSearchForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  openPlace(input.value);
+});
+
+function openPlace(place) {
+  if (place) {
+    document.getElementById("mapFrame").src =
+      `https://www.google.com/maps?q=${encodeURIComponent(place)}&output=embed`;
+  }
+}
+</script>
+</body>
+</html>
