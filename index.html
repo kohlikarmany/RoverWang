@@ -1,307 +1,593 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Sydney Trip Planner — Dad</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ROVER WANG</title>
 <style>
-  :root{
-    --bg:#fbfbfc; --card:#fff; --muted:#6b7280; --accent:#0f766e; --accent-2:#064e3b;
-    --big:18px; --bigger:20px; --pad:16px;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #fff;
+    color: #000;
+    overflow-x: hidden;
   }
-  body{margin:0;background:var(--bg);color:#111}
-  header{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff;padding:20px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-  header h1{font-size:20px;margin:0}
-  .lang-btn{background:rgba(255,255,255,0.12);border:0;color:#fff;padding:8px 12px;border-radius:10px;font-weight:600}
-  .container{padding:16px;max-width:920px;margin:18px auto}
-  .grid{display:grid;grid-template-columns:1fr;gap:12px}
-  .card{background:var(--card);border-radius:14px;padding:14px;box-shadow:0 6px 18px rgba(15,23,42,0.06)}
-  .big-btn{display:flex;align-items:center;justify-content:space-between;padding:14px;border-radius:12px;background:#f8fafb;border:1px solid #eee;font-size:16px}
-  .title{font-size:16px;font-weight:700}
-  .muted{color:var(--muted);font-size:14px}
-  .itinerary-day{border-radius:10px;padding:10px;margin-bottom:10px;border:1px solid #eee;background:#fff;display:flex;flex-direction:column;gap:8px}
-  .event{display:flex;align-items:center;gap:12px;padding:8px;border-radius:8px; cursor:pointer}
-  .time{width:78px;flex-shrink:0;font-weight:700;color:var(--accent)}
-  .event .name{font-weight:700}
-  .event small{display:block;color:var(--muted);font-size:13px}
-  .gallery{display:flex;gap:8px;flex-wrap:wrap}
-  .gallery img{width:48%;border-radius:10px;object-fit:cover;height:120px}
-  .controls{display:flex;gap:8px;flex-wrap:wrap}
-  .btn{padding:10px 14px;border-radius:10px;border:0;background:var(--accent);color:#fff;font-weight:700}
-  .btn.secondary{background:#fff;color:var(--accent);border:1px solid #e6f0ee}
-  /* modal */
-  .modal{position:fixed;inset:0;background:rgba(2,6,23,0.45);display:flex;align-items:flex-end;justify-content:center;padding:16px;visibility:hidden;opacity:0;transition:opacity .18s, visibility .18s}
-  .modal.open{visibility:visible;opacity:1}
-  .sheet{width:100%;max-width:720px;background:#fff;border-radius:14px;padding:16px;box-shadow:0 30px 60px rgba(2,6,23,0.25);max-height:92vh;overflow:auto}
-  .sheet h2{margin:0 0 8px 0}
-  .sheet p{margin:6px 0;color:var(--muted)}
-  .sheet .langline{margin-top:12px;padding:10px;border-radius:8px;background:#f7fbfa;border:1px solid #f1f6f5}
-  footer{padding:18px;text-align:center;color:var(--muted);font-size:13px}
-  @media(min-width:800px){ .grid{grid-template-columns:1fr 360px} .gallery img{width:100%;height:140px} }
+  #splash {
+    position: fixed; top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: #fff;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    z-index: 9999;
+    animation: fadeOut 1.5s ease 1.5s forwards;
+  }
+  @keyframes fadeOut {
+    to { opacity: 0; visibility: hidden; }
+  }
+  header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 20px;
+    background: #000; color: #fff;
+    position: fixed; top: 0; left: 0; right: 0;
+    box-sizing: border-box;
+    z-index: 50;
+    transform: translateY(-100%);
+    transition: transform 0.4s;
+    width: 100vw;
+  }
+  header.show { transform: translateY(0); }
+  .logo {
+    font-size: 2rem;
+    font-weight: bold;
+  }
+  #langBtn {
+    font-size: 1rem;
+    cursor: pointer;
+    border: 1px solid #fff;
+    background: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    color: #fff;
+    white-space: nowrap;
+    margin-right: 10px;
+  }
+  main {
+    padding-top: 70px;
+    padding-left: 20px;
+    padding-right: 20px;
+    box-sizing: border-box;
+  }
+  .page {
+    display: none;
+    padding-top: 20px;
+    box-sizing: border-box;
+  }
+  .page.active {
+    display: block;
+  }
+  .grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr); /* exactly 6 per row */
+  gap: 30px;
+  justify-items: center;
+  margin: 0 auto;
+  max-width: 1200px; /* keeps it centered nicely */
+}
+
+.day-box {
+  background: #f2f2f2;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  cursor: pointer;
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+  aspect-ratio: 1/1;
+  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1),
+              background 0.3s, box-shadow 0.2s, z-index 0.3s;
+  width: 100%;
+  max-width: 160px;
+  min-width: 120px;
+  will-change: transform;
+  z-index: 1;
+  margin: 0 auto;
+}
+  .day-title {
+    font-weight: bold;
+  }
+  .day-date {
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+  }
+  .day-details {
+    font-size: 0.8rem;
+    opacity: 0;
+    max-height: 0;
+    overflow: auto;
+    transition: opacity 0.3s, max-height 0.3s;
+  }
+  .day-box:hover {
+    background: #ddd;
+    transform: scale(1.3);
+    max-width: 380px;
+    max-height: 380px;
+    overflow: auto;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+    z-index: 20;
+  }
+  .day-box:hover .day-details {
+    opacity: 1;
+    max-height: 350px;
+    overflow: auto;
+  }
+  .gallery-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+  }
+  .gallery-grid img {
+    width: 200px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: transform 0.3s;
+  }
+  .gallery-grid img:hover {
+    transform: scale(1.05);
+  }
+  nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    display: flex;
+    justify-content: space-around;
+    background: #000;
+    color: #fff;
+    padding: 10px 0;
+    z-index: 50;
+    box-sizing: border-box;
+  }
+  nav button {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 5px 10px;
+    transition: background 0.3s;
+  }
+  nav button:hover {
+    background: #444;
+    border-radius: 5px;
+  }
+
+/* MAPS FIX – fills entire visible area */
+.maps-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.responsive-map-iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* MAP CONTAINER – full screen, no gaps */
+.maps-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* GOOGLE MAP fills the entire container */
+.responsive-map-iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  z-index: 1; /* map layer */
+}
+
+
+/* MAP fills the entire screen */
+.maps-container {
+  position: fixed;
+  top: 50;
+  left: 20;
+  right: 20;
+  bottom: 100;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #000; /* just in case map fails to load */
+  z-index: 1;
+}
+
+/* MAP itself */
+.responsive-map-iframe {
+  position: absolute;
+  top: 60px;
+  left: 0;
+  height: 80%;
+  width: 100%;
+  border: none;
+  z-index: 1;
+}
+
+/* SEARCH BAR – visible inside map */
+.map-search {
+  position: absolute;
+  top: 100px; /* Adjust this to move down more or less */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 600px;
+  display: flex;
+  gap: 6px;
+  background: rgba(255,255,255,0.95);
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+  z-index: 10; /* ensures it’s ABOVE the map */
+}
+
+/* Search bar styling */
+.map-search input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+.map-search button {
+  padding: 10px 14px;
+  border: none;
+  background: #000;
+  color: #fff;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+.map-search button:hover {
+  background: #444;
+}
+
+.clear-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  color: black;
+  border: none;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: 1.4em;
+  line-height: 1;
+  padding: 0;
+
+  /* Smooth fade in/out */
+  opacity: 0;                  /* start hidden */
+  pointer-events: none;         /* ignore clicks when hidden */
+  transition: opacity 0.2s ease;
+}
+
+  .suggestions {
+    position: absolute;
+    left: 0;
+    right: 120px;
+    top: 47px;
+    background: #fff;
+    border: 1px solid #ccc;
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    border-radius: 0 0 10px 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.09);
+  }
+  .suggestions div {
+    padding: 10px 18px;
+    cursor: pointer;
+  }
+  .suggestions div:hover {
+    background: #ececec;
+  }
+  /* Hide native clear button */
+  #mapSearchInput::-webkit-search-cancel-button,
+  #mapSearchInput::-webkit-search-decoration,
+  #mapSearchInput::-webkit-search-results-button,
+  #mapSearchInput::-webkit-search-results-decoration {
+    display: none;
+  }
+  #mapSearchInput::-ms-clear {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+  @media (max-width: 700px) {
+    main {
+      margin-left: 10px;
+      margin-right: 10px;
+      padding: 10px 0;
+    }
+    .maps-container {
+      height: calc(100vh - 70px - 64px);
+      margin-left: 0;
+      margin-top: 0;
+    }
+    .responsive-map-iframe {
+      min-height: 180px;
+    }
+    .map-search {
+      width: 90vw;
+      min-width: 260px;
+      left: 50%;
+      top: 10vw;
+      transform: translateX(-50%);
+    }
+    .clear-btn {
+      right: 60px;
+    }
+    .suggestions {
+      right: 70px;
+    }
+  }
 </style>
 </head>
 <body>
-<header>
-  <h1 id="hdr-title">Sydney Trip Planner</h1>
-  <div>
-    <button class="lang-btn" id="langToggle">हिंदी</button>
-  </div>
+<div id="splash"><h1>RW</h1><h2>ROVER WANG</h2></div>
+<header id="mainHeader">
+  <div class="logo">RW</div>
+  <button id="langBtn">HI</button>
 </header>
-
-<div class="container">
-  <div class="grid">
-    <!-- left column: itinerary + gallery -->
-    <div>
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div class="title" id="home-welcome">Welcome</div>
-            <div class="muted" id="home-sub">Dad’s travel companion — tap a day to expand</div>
-          </div>
-          <div class="controls">
-            <button class="btn" id="printBtn">Print / Save PDF</button>
-            <button class="btn secondary" id="downloadBtn">Download Planner</button>
-          </div>
-        </div>
-        <hr style="margin:12px 0;border:none;border-top:1px solid #f0f2f1">
-        <div id="itineraryArea"></div>
-      </div>
-
-      <div style="height:12px"></div>
-
-      <div class="card">
-        <div class="title" id="gallery-title">Photo Journal</div>
-        <div class="muted" id="gallery-sub">Tap to view full size</div>
-        <div style="height:10px"></div>
-        <div class="gallery" id="gallery"></div>
-      </div>
+<main>
+  <section id="page-itinerary" class="page active"><div class="grid" id="itineraryGrid"></div></section>
+  <section id="page-gallery" class="page">
+    <div class="gallery-grid">
+      <img src="https://via.placeholder.com/200x150" alt="Gallery Image 1" />
+      <img src="https://via.placeholder.com/200x150" alt="Gallery Image 2" />
+      <img src="https://via.placeholder.com/200x150" alt="Gallery Image 3" />
     </div>
-
-    <!-- right column: quick actions -->
-    <aside>
-      <div class="card">
-        <div class="title" id="quick-title">Quick Actions</div>
-        <div style="height:8px"></div>
-        <button class="big-btn" id="openMapBtn">
-          <div><strong id="map-btn-text">Open Map</strong><div class="muted" id="map-btn-sub">See all places</div></div>
-          <div style="font-size:20px">🗺️</div>
-        </button>
-        <div style="height:10px"></div>
-        <button class="big-btn" id="openGalleryBtn">
-          <div><strong id="gallery-btn-text">Open Gallery</strong><div class="muted" id="gallery-btn-sub">View photos</div></div>
-          <div style="font-size:20px">📷</div>
-        </button>
-        <div style="height:10px"></div>
-        <button class="big-btn" id="contactsBtn">
-          <div><strong id="contacts-text">Emergency & Contacts</strong><div class="muted" id="contacts-sub">Important numbers</div></div>
-          <div style="font-size:20px">📞</div>
-        </button>
-      </div>
-
-      <div style="height:10px"></div>
-
-      <div class="card">
-        <div class="title" id="help-title">Tips</div>
-        <p class="muted" id="help-text">Tap an event to see details. Use Print to save a PDF for offline use. Maps link opens Google Maps.</p>
-      </div>
-    </aside>
-  </div>
-</div>
-
-<!-- detail modal -->
-<div id="modal" class="modal" role="dialog" aria-modal="true">
-  <div class="sheet" role="document">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <h2 id="modal-title">Event title</h2>
-      <div><button class="btn secondary" id="closeModal">Close</button></div>
+  </section>
+  <section id="page-maps" class="page" style="padding: 0;">
+    <div class="maps-container">
+      <form class="map-search" id="mapSearchForm" autocomplete="off" onsubmit="return false;">
+        <input type="search" id="mapSearchInput" placeholder="Search place…" autocomplete="off" />
+        <button type="submit" id="mapSearchBtn">Go</button>
+        <button type="button" class="clear-btn" id="clearInputBtn" style="display:none" tabindex="-1" aria-label="Clear">&times;</button>
+        <div class="suggestions" id="autocompleteSuggestions" style="display:none"></div>
+      </form>
+      <iframe id="mapFrame" class="responsive-map-iframe" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d13230.353504310997!2d151.2100!3d-33.8570!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6b12ae6c3b66f27d%3A0x53cbcf2e74d8b573!2sSydney%20Opera%20House!5e0!3m2!1sen!2sau!4v1695970800000" allowfullscreen loading="lazy"></iframe>
     </div>
-    <div id="modal-body">
-      <p id="modal-desc" class="muted">Description...</p>
-      <div id="modal-extra"></div>
-
-      <div class="langline" id="modal-hindi" style="display:none"></div>
-
-      <div style="height:12px"></div>
-      <div style="display:flex;gap:8px">
-        <a id="mapLink" class="btn" href="#" target="_blank">Open in Maps</a>
-        <button class="btn secondary" id="shareBtn">Share (copy)</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<footer>Made for Dad • Simple planner — works offline when printed</footer>
-
+  </section>
+</main>
+<nav>
+  <button data-page="page-itinerary">ITINERARY</button>
+  <button data-page="page-gallery">GALLERY</button>
+  <button data-page="page-maps">MAPS</button>
+</nav>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC9MepEp1_FD6a1GBFCKYVQQjxzOlDpQ7k&libraries=places"></script>
 <script>
-/* ----------------- CONTENT: edit this part -----------------
-   Add events and gallery items here. Each event has id, day, time, title_en, title_hi, desc_en, desc_hi, lat, lng, mapLabel
-*/
-const DATA = {
-  meta: { tripName_en: "Sydney Trip for Dad", tripName_hi: "डैड का सिडनी यात्रा" },
+  setTimeout(() => { document.getElementById("mainHeader").classList.add("show"); }, 1500);
 
-  itinerary: [
-    // Day 1
-    { id: "d1e1", day: "Day 1 — 2025-10-01", time: "09:00", title_en:"Sydney Opera House visit", title_hi:"सिडनी ओपेरा हाउस भ्रमण", desc_en:"Guided walk & photos at the Opera House. Meet at forecourt, buy tickets at Box Office.", desc_hi:"ओपेरा हाउस पर गाइडेड वॉक और तस्वीरें। फोरकोर्ट पर मिलें। टिकट बॉक्स ऑफिस से लें।", lat:-33.8568, lng:151.2153, mapLabel:"Sydney Opera House" },
-    { id: "d1e2", day: "Day 1 — 2025-10-01", time: "12:30", title_en:"Harbour Bridge walk", title_hi:"हार्बर ब्रिज वॉक", desc_en:"Short walk across the bridge then lunch at The Rocks.", desc_hi:"ब्रिज पार छोटी सैर और फिर द रॉक्स में दोपहर का खाना।", lat:-33.8523, lng:151.2108, mapLabel:"Harbour Bridge" },
-
-    // Day 2
-    { id: "d2e1", day: "Day 2 — 2025-10-02", time: "10:00", title_en:"Royal Botanic Garden", title_hi:"रॉयल बॉटेनिक गार्डन", desc_en:"Relaxing morning walk and bird watching.", desc_hi:"सुबह की सैर और पक्षी देखना।", lat:-33.8642, lng:151.2166, mapLabel:"Royal Botanic Garden" },
-    { id: "d2e2", day: "Day 2 — 2025-10-02", time: "14:00", title_en:"Museum of Contemporary Art", title_hi:"आधुनिक कला संग्रहालय", desc_en:"Exhibition opens at 2pm. Tickets optional.", desc_hi:"प्रदर्शनी दोपहर 2 बजे खुलती है। टिकट वैकल्पिक।", lat:-33.8600, lng:151.2094, mapLabel:"MCA" }
-  ],
-
-  gallery: [
-    { id:"g1", src:"https://upload.wikimedia.org/wikipedia/commons/4/4e/Sydney_Opera_House_-_Dec_2008.jpg", caption_en:"Opera House view", caption_hi:"ओपेरा हाउस दृश्य" },
-    { id:"g2", src:"https://upload.wikimedia.org/wikipedia/commons/6/66/Sydney_Harbour_Bridge_from_Mrs_Macquaries_Point.jpg", caption_en:"Harbour Bridge", caption_hi:"हार्बर ब्रिज" }
-  ]
-};
-/* ----------------- end content ----------------- */
-
-let lang = 'en'; // 'en' or 'hi'
-
-/* UI elements */
-const langToggle = document.getElementById('langToggle');
-const hdrTitle = document.getElementById('hdr-title');
-const homeWelcome = document.getElementById('home-welcome');
-const homeSub = document.getElementById('home-sub');
-const itineraryArea = document.getElementById('itineraryArea');
-const galleryEl = document.getElementById('gallery');
-const modal = document.getElementById('modal');
-const modalTitle = document.getElementById('modal-title');
-const modalDesc = document.getElementById('modal-desc');
-const modalHindi = document.getElementById('modal-hindi');
-const mapLink = document.getElementById('mapLink');
-const printBtn = document.getElementById('printBtn');
-const downloadBtn = document.getElementById('downloadBtn');
-const openMapBtn = document.getElementById('openMapBtn');
-const openGalleryBtn = document.getElementById('openGalleryBtn');
-const shareBtn = document.getElementById('shareBtn');
-const closeModal = document.getElementById('closeModal');
-
-// language toggle
-langToggle.addEventListener('click', ()=> {
-  lang = (lang==='en') ? 'hi' : 'en';
-  langToggle.textContent = (lang==='en') ? 'हिंदी' : 'English';
-  renderAll();
-});
-
-/* Build itinerary grouped by day */
-function groupByDay(items){
-  const map = {};
-  items.forEach(it => {
-    if(!map[it.day]) map[it.day] = [];
-    map[it.day].push(it);
-  });
-  return map;
-}
-
-function openModal(item){
-  modal.classList.add('open');
-  modalTitle.textContent = (lang==='en') ? item.title_en : item.title_hi || item.title_en;
-  modalDesc.textContent = (lang==='en') ? item.desc_en : item.desc_hi || item.desc_en;
-  modalHindi.style.display = (lang==='en' && item.title_hi) ? 'block' : (lang==='hi' ? 'block' : 'none');
-  modalHindi.textContent = (lang==='en') ? `हिन्दी: ${item.title_hi} — ${item.desc_hi || ''}` : '';
-  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.lat + ',' + item.lng)}&query_place_id=${encodeURIComponent(item.mapLabel||'')}`;
-  mapLink.href = mapsUrl;
-  mapLink.textContent = (lang==='en') ? 'Open in Maps' : 'मैप में देखें';
-}
-
-closeModal.addEventListener('click', ()=> modal.classList.remove('open'));
-modal.addEventListener('click', (e)=>{ if(e.target===modal) modal.classList.remove('open'); });
-
-function renderItinerary(){
-  const grouped = groupByDay(DATA.itinerary);
-  itineraryArea.innerHTML = '';
-  for(const day of Object.keys(grouped)){
-    const dayBox = document.createElement('div');
-    dayBox.className = 'itinerary-day';
-    const dayTitle = document.createElement('div');
-    dayTitle.innerHTML = `<strong style="font-size:15px">${day}</strong>`;
-    dayBox.appendChild(dayTitle);
-
-    grouped[day].forEach(evt => {
-      const ev = document.createElement('div');
-      ev.className = 'event';
-      ev.tabIndex = 0;
-      ev.innerHTML = `<div class="time">${evt.time}</div>
-        <div>
-          <div class="name">${(lang==='en')?evt.title_en:evt.title_hi||evt.title_en}</div>
-          <small>${(lang==='en')?evt.desc_en.slice(0,60):evt.desc_hi?evt.desc_hi.slice(0,60):evt.desc_en.slice(0,60)}…</small>
-        </div>`;
-      ev.addEventListener('click', ()=> openModal(evt));
-      ev.addEventListener('keypress', (e)=> { if(e.key==='Enter') openModal(evt); });
-      dayBox.appendChild(ev);
-    });
-    itineraryArea.appendChild(dayBox);
+  const startDate = new Date("2025-10-12");
+  const details = [
+    "Arrival and check-in at hotel. Visit Circular Quay in the evening.",
+    "Opera House tour at 10 AM. Lunch at The Rocks. Ferry to Manly.",
+    "Blue Mountains day trip. Scenic World rides.",
+    "Taronga Zoo visit. Afternoon at Bondi Beach.",
+    "Museum of Contemporary Art. Dinner at Darling Harbour.",
+    "Harbour Bridge climb. Explore Barangaroo.",
+    "Day trip to Hunter Valley wine region.",
+    "Shopping at Pitt Street Mall. Evening show at Opera House.",
+    "Royal Botanic Gardens walk. Sydney Tower Eye.",
+    "Day trip to Canberra.",
+    "Relaxation day at Coogee Beach.",
+    "Sea Life Aquarium. Madame Tussauds.",
+    "Departure day and souvenir shopping.",
+  ];
+  const itineraryGrid = document.getElementById("itineraryGrid");
+  for(let i = 0; i < details.length; i++) {
+    const d = new Date(startDate);
+    d.setDate(d.getDate() + i);
+    const box = document.createElement("div");
+    box.className = "day-box";
+    box.innerHTML = `
+      <div class="day-title">Day ${i + 1}</div>
+      <div class="day-date">${d.getDate()}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d.getFullYear()}</div>
+      <div class="day-details">${details[i]}</div>
+    `;
+    itineraryGrid.appendChild(box);
   }
-}
 
-function renderGallery(){
-  galleryEl.innerHTML = '';
-  DATA.gallery.forEach(pic => {
-    const img = document.createElement('img');
-    img.src = pic.src;
-    img.alt = (lang==='en')?pic.caption_en:pic.caption_hi||pic.caption_en;
-    img.addEventListener('click', ()=> {
-      const html = `<div style="text-align:center">
-        <h3>${(lang==='en')?pic.caption_en:pic.caption_hi||pic.caption_en}</h3>
-        <img src="${pic.src}" style="width:100%;max-width:720px;border-radius:8px" />
-      </div>`;
-      modal.classList.add('open');
-      modalTitle.textContent = (lang==='en')?pic.caption_en:pic.caption_hi||pic.caption_en;
-      modalDesc.innerHTML = '';
-      modalHindi.style.display='none';
-      mapLink.href = '#';
-      mapLink.style.display='none';
+  // Page navigation buttons
+  document.querySelectorAll("nav button").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".page").forEach((p) => p.classList.remove("active"));
+      document.getElementById(btn.dataset.page).classList.add("active");
     });
-    galleryEl.appendChild(img);
   });
-}
 
-function renderAll(){
-  hdrTitle.textContent = (lang==='en') ? DATA.meta.tripName_en : DATA.meta.tripName_hi;
-  homeWelcome.textContent = (lang==='en') ? 'Welcome' : 'स्वागत है';
-  homeSub.textContent = (lang==='en') ? "Tap a day to open events" : "किसी दिन पर टैप करें";
-  document.getElementById('gallery-title').textContent = (lang==='en') ? 'Photo Journal' : 'फोटो जर्नल';
-  document.getElementById('gallery-sub').textContent = (lang==='en') ? 'Tap to view full size' : 'पूर्ण आकार देखने के लिए टैप करें';
-  document.getElementById('quick-title').textContent = (lang==='en') ? 'Quick Actions' : 'त्वरित क्रियाएँ';
-  document.getElementById('map-btn-text').textContent = (lang==='en') ? 'Open Map' : 'मैप खोलें';
-  document.getElementById('gallery-btn-text').textContent = (lang==='en') ? 'Open Gallery' : 'गैलरी खोलें';
-  renderItinerary();
-  renderGallery();
-  mapLink.style.display='inline-block';
-}
+  // Map search autocomplete
+  const input = document.getElementById("mapSearchInput");
+  const suggestionsDiv = document.getElementById("autocompleteSuggestions");
+  let autocompleteService, selectedSuggestionIndex = -1, currentSuggestions = [];
+  if(window.google && google.maps && google.maps.places){
+    autocompleteService = new google.maps.places.AutocompleteService();
+  }
+  input.addEventListener("input", () => {
+    const val = input.value.trim();
+    document.getElementById("clearInputBtn").style.display = val ? "block" : "none";
+    if(!val || !autocompleteService){
+      suggestionsDiv.style.display = "none";
+      suggestionsDiv.innerHTML = "";
+      return;
+    }
+    autocompleteService.getPlacePredictions({input: val}, function(predictions, status){
+      if(status !== google.maps.places.PlacesServiceStatus.OK || !predictions.length){
+        suggestionsDiv.style.display = "none";
+        suggestionsDiv.innerHTML = "";
+        return;
+      }
+      suggestionsDiv.innerHTML = "";
+      currentSuggestions = predictions;
+      predictions.forEach((p,i) => {
+        const div = document.createElement("div");
+        div.textContent = p.description;
+        div.setAttribute("data-index", i);
+        div.onclick = function(){
+          input.value = p.description;
+          suggestionsDiv.style.display = "none";
+          openPlace(p.description);
+        };
+        suggestionsDiv.appendChild(div);
+      });
+      selectedSuggestionIndex = -1;
+      suggestionsDiv.style.display = "block";
+    });
+  });
+  input.addEventListener("keydown", (e) => {
+    if(suggestionsDiv.style.display === "none") return;
+    const items = suggestionsDiv.querySelectorAll("div");
+    if(e.key === "ArrowDown"){
+      selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, items.length - 1);
+      items.forEach((el,i) => el.style.background = i === selectedSuggestionIndex ? "#ececec" : "");
+      if(selectedSuggestionIndex > -1) items[selectedSuggestionIndex].scrollIntoView({block: "nearest"});
+      e.preventDefault();
+    } else if(e.key === "ArrowUp"){
+      selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, 0);
+      items.forEach((el,i) => el.style.background = i === selectedSuggestionIndex ? "#ececec" : "");
+      if(selectedSuggestionIndex > -1) items[selectedSuggestionIndex].scrollIntoView({block: "nearest"});
+      e.preventDefault();
+    } else if(e.key === "Enter"){
+      if(selectedSuggestionIndex > -1 && currentSuggestions[selectedSuggestionIndex]){
+        input.value = currentSuggestions[selectedSuggestionIndex].description;
+        suggestionsDiv.style.display = "none";
+        openPlace(input.value);
+        e.preventDefault();
+      } else {
+        suggestionsDiv.style.display = "none";
+        openPlace(input.value);
+        e.preventDefault();
+      }
+    }
+  });
+  document.body.addEventListener("click", (event) => {
+    if(!suggestionsDiv.contains(event.target) && event.target !== input){
+      suggestionsDiv.style.display = "none";
+    }
+  });
+  document.getElementById("mapSearchForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    suggestionsDiv.style.display = "none";
+    openPlace(input.value);
+  });
+  document.getElementById("clearInputBtn").addEventListener("click", () => {
+    input.value = "";
+    document.getElementById("clearInputBtn").style.display = "none";
+    suggestionsDiv.style.display = "none";
+    input.focus();
+  });
+  input.addEventListener("input", () => {
+    document.getElementById("clearInputBtn").style.display = input.value ? "block" : "none";
+  });
+  function openPlace(place) {
+    if(place){
+      document.getElementById("mapFrame").src = `https://www.google.com/maps?q=${encodeURIComponent(place)}&output=embed`;
+    }
+  }
 
-printBtn.addEventListener('click', ()=> window.print());
-downloadBtn.addEventListener('click', ()=> {
-  // simple download: create a printable HTML file snapshot
-  const content = document.documentElement.outerHTML;
-  const blob = new Blob([content], {type:'text/html'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'SydneyTripPlanner.html'; a.click();
-  URL.revokeObjectURL(url);
-});
-
-openMapBtn.addEventListener('click', ()=> {
-  // open google maps search with all lat/lngs
-  const queries = DATA.itinerary.map(it => `${it.lat},${it.lng}`).join('|');
-  const url = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(DATA.itinerary[0].lat + ',' + DATA.itinerary[0].lng);
-  window.open(url, '_blank');
-});
-
-openGalleryBtn.addEventListener('click', ()=> {
-  // simple: scroll to gallery and focus
-  galleryEl.scrollIntoView({behavior:'smooth'});
-});
-
-shareBtn.addEventListener('click', ()=>{
-  const text = `${modalTitle.textContent}\n${modalDesc.textContent}\n`;
-  navigator.clipboard?.writeText(text).then(()=> alert((lang==='en')? 'Copied to clipboard' : 'क्लिपबोर्ड पर कॉपी किया गया'));
-});
-
-/* initial render */
-renderAll();
+  // Language toggle
+  const languageButton = document.getElementById("langBtn");
+  const languageData = {
+    HI: {
+      itinerary: [
+        "आगमन और होटल में चेक-इन। शाम को सर्कुलर क्वे देखें।",
+        "सुबह 10 बजे ओपरा हाउस टूर। लंच द रॉक्स में। मन्नली के लिए फेरी।",
+        "ब्लू माउंटेन का एक दिवसीय भ्रमण। सीनिक वर्ल्ड की सवारी।",
+        "तरोंगा ज़ू यात्रा। दोपहर को बॉन्डी बीच।",
+        "मॉडर्न आर्ट का संग्रहालय। डार्लिंग हार्बर में डिनर।",
+        "हार्बर ब्रिज पर चढ़ाई। बारंगारू का अन्वेषण।",
+        "हंटर वैली शराब क्षेत्र की एक दिन की यात्रा।",
+        "पिट स्ट्रीट मॉल में खरीदारी। ओपेरा हाउस में शाम का शो।",
+        "रॉयल बोटैनिक गार्डन की सैर। सिडनी टावर आइ।",
+        "कैनबरा का एक दिन का भ्रमण।",
+        "कुगी बीच पर विश्राम का दिन।",
+        "सी लाइफ एक्वेरियम। मडेम टुसाद्स।",
+        "विसृति का दिन और स्मृति चिन्हों की खरीदारी।",
+      ],
+      menu: {
+        itinerary: "यात्रा",
+        gallery: "गैलरी",
+        maps: "नक्शे",
+      },
+      langBtnLabel: "EN"
+    },
+    EN: {
+      itinerary: [
+        "Arrival and check-in at hotel. Visit Circular Quay in the evening.",
+        "Opera House tour at 10 AM. Lunch at The Rocks. Ferry to Manly.",
+        "Blue Mountains day trip. Scenic World rides.",
+        "Taronga Zoo visit. Afternoon at Bondi Beach.",
+        "Museum of Contemporary Art. Dinner at Darling Harbour.",
+        "Harbour Bridge climb. Explore Barangaroo.",
+        "Day trip to Hunter Valley wine region.",
+        "Shopping at Pitt Street Mall. Evening show at Opera House.",
+        "Royal Botanic Gardens walk. Sydney Tower Eye.",
+        "Day trip to Canberra.",
+        "Relaxation day at Coogee Beach.",
+        "Sea Life Aquarium. Madame Tussauds.",
+        "Departure day and souvenir shopping.",
+      ],
+      menu: {
+        itinerary: "Itinerary",
+        gallery: "Gallery",
+        maps: "Maps",
+      },
+      langBtnLabel: "HI"
+    }
+  };
+  let currentLang = "EN";
+  languageButton.addEventListener("click", () => {
+    currentLang = currentLang === "EN" ? "HI" : "EN";
+    const data = languageData[currentLang];
+    for(let i=0; i<details.length; i++){
+      document.querySelectorAll(".day-box")[i].querySelector(".day-details").textContent = data.itinerary[i];
+    }
+    // menu buttons text
+    document.querySelector("nav button[data-page='page-itinerary']").textContent = data.menu.itinerary;
+    document.querySelector("nav button[data-page='page-gallery']").textContent = data.menu.gallery;
+    document.querySelector("nav button[data-page='page-maps']").textContent = data.menu.maps;
+    // change lang button label
+    languageButton.textContent = data.langBtnLabel;
+  });
 </script>
 </body>
 </html>

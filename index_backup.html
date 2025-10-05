@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Sydney Trip Planner — Dad</title>
+<style>
+  :root{
+    --bg:#fbfbfc; --card:#fff; --muted:#6b7280; --accent:#0f766e; --accent-2:#064e3b;
+    --big:18px; --bigger:20px; --pad:16px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  body{margin:0;background:var(--bg);color:#111}
+  header{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff;padding:20px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  header h1{font-size:20px;margin:0}
+  .lang-btn{background:rgba(255,255,255,0.12);border:0;color:#fff;padding:8px 12px;border-radius:10px;font-weight:600}
+  .container{padding:16px;max-width:920px;margin:18px auto}
+  .grid{display:grid;grid-template-columns:1fr;gap:12px}
+  .card{background:var(--card);border-radius:14px;padding:14px;box-shadow:0 6px 18px rgba(15,23,42,0.06)}
+  .big-btn{display:flex;align-items:center;justify-content:space-between;padding:14px;border-radius:12px;background:#f8fafb;border:1px solid #eee;font-size:16px}
+  .title{font-size:16px;font-weight:700}
+  .muted{color:var(--muted);font-size:14px}
+  .itinerary-day{border-radius:10px;padding:10px;margin-bottom:10px;border:1px solid #eee;background:#fff;display:flex;flex-direction:column;gap:8px}
+  .event{display:flex;align-items:center;gap:12px;padding:8px;border-radius:8px; cursor:pointer}
+  .time{width:78px;flex-shrink:0;font-weight:700;color:var(--accent)}
+  .event .name{font-weight:700}
+  .event small{display:block;color:var(--muted);font-size:13px}
+  .gallery{display:flex;gap:8px;flex-wrap:wrap}
+  .gallery img{width:48%;border-radius:10px;object-fit:cover;height:120px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{padding:10px 14px;border-radius:10px;border:0;background:var(--accent);color:#fff;font-weight:700}
+  .btn.secondary{background:#fff;color:var(--accent);border:1px solid #e6f0ee}
+  /* modal */
+  .modal{position:fixed;inset:0;background:rgba(2,6,23,0.45);display:flex;align-items:flex-end;justify-content:center;padding:16px;visibility:hidden;opacity:0;transition:opacity .18s, visibility .18s}
+  .modal.open{visibility:visible;opacity:1}
+  .sheet{width:100%;max-width:720px;background:#fff;border-radius:14px;padding:16px;box-shadow:0 30px 60px rgba(2,6,23,0.25);max-height:92vh;overflow:auto}
+  .sheet h2{margin:0 0 8px 0}
+  .sheet p{margin:6px 0;color:var(--muted)}
+  .sheet .langline{margin-top:12px;padding:10px;border-radius:8px;background:#f7fbfa;border:1px solid #f1f6f5}
+  footer{padding:18px;text-align:center;color:var(--muted);font-size:13px}
+  @media(min-width:800px){ .grid{grid-template-columns:1fr 360px} .gallery img{width:100%;height:140px} }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="hdr-title">Sydney Trip Planner</h1>
+  <div>
+    <button class="lang-btn" id="langToggle">हिंदी</button>
+  </div>
+</header>
+
+<div class="container">
+  <div class="grid">
+    <!-- left column: itinerary + gallery -->
+    <div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div class="title" id="home-welcome">Welcome</div>
+            <div class="muted" id="home-sub">Dad’s travel companion — tap a day to expand</div>
+          </div>
+          <div class="controls">
+            <button class="btn" id="printBtn">Print / Save PDF</button>
+            <button class="btn secondary" id="downloadBtn">Download Planner</button>
+          </div>
+        </div>
+        <hr style="margin:12px 0;border:none;border-top:1px solid #f0f2f1">
+        <div id="itineraryArea"></div>
+      </div>
+
+      <div style="height:12px"></div>
+
+      <div class="card">
+        <div class="title" id="gallery-title">Photo Journal</div>
+        <div class="muted" id="gallery-sub">Tap to view full size</div>
+        <div style="height:10px"></div>
+        <div class="gallery" id="gallery"></div>
+      </div>
+    </div>
+
+    <!-- right column: quick actions -->
+    <aside>
+      <div class="card">
+        <div class="title" id="quick-title">Quick Actions</div>
+        <div style="height:8px"></div>
+        <button class="big-btn" id="openMapBtn">
+          <div><strong id="map-btn-text">Open Map</strong><div class="muted" id="map-btn-sub">See all places</div></div>
+          <div style="font-size:20px">🗺️</div>
+        </button>
+        <div style="height:10px"></div>
+        <button class="big-btn" id="openGalleryBtn">
+          <div><strong id="gallery-btn-text">Open Gallery</strong><div class="muted" id="gallery-btn-sub">View photos</div></div>
+          <div style="font-size:20px">📷</div>
+        </button>
+        <div style="height:10px"></div>
+        <button class="big-btn" id="contactsBtn">
+          <div><strong id="contacts-text">Emergency & Contacts</strong><div class="muted" id="contacts-sub">Important numbers</div></div>
+          <div style="font-size:20px">📞</div>
+        </button>
+      </div>
+
+      <div style="height:10px"></div>
+
+      <div class="card">
+        <div class="title" id="help-title">Tips</div>
+        <p class="muted" id="help-text">Tap an event to see details. Use Print to save a PDF for offline use. Maps link opens Google Maps.</p>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- detail modal -->
+<div id="modal" class="modal" role="dialog" aria-modal="true">
+  <div class="sheet" role="document">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2 id="modal-title">Event title</h2>
+      <div><button class="btn secondary" id="closeModal">Close</button></div>
+    </div>
+    <div id="modal-body">
+      <p id="modal-desc" class="muted">Description...</p>
+      <div id="modal-extra"></div>
+
+      <div class="langline" id="modal-hindi" style="display:none"></div>
+
+      <div style="height:12px"></div>
+      <div style="display:flex;gap:8px">
+        <a id="mapLink" class="btn" href="#" target="_blank">Open in Maps</a>
+        <button class="btn secondary" id="shareBtn">Share (copy)</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>Made for Dad • Simple planner — works offline when printed</footer>
+
+<script>
+/* ----------------- CONTENT: edit this part -----------------
+   Add events and gallery items here. Each event has id, day, time, title_en, title_hi, desc_en, desc_hi, lat, lng, mapLabel
+*/
+const DATA = {
+  meta: { tripName_en: "Sydney Trip for Dad", tripName_hi: "डैड का सिडनी यात्रा" },
+
+  itinerary: [
+    // Day 1
+    { id: "d1e1", day: "Day 1 — 2025-10-01", time: "09:00", title_en:"Sydney Opera House visit", title_hi:"सिडनी ओपेरा हाउस भ्रमण", desc_en:"Guided walk & photos at the Opera House. Meet at forecourt, buy tickets at Box Office.", desc_hi:"ओपेरा हाउस पर गाइडेड वॉक और तस्वीरें। फोरकोर्ट पर मिलें। टिकट बॉक्स ऑफिस से लें।", lat:-33.8568, lng:151.2153, mapLabel:"Sydney Opera House" },
+    { id: "d1e2", day: "Day 1 — 2025-10-01", time: "12:30", title_en:"Harbour Bridge walk", title_hi:"हार्बर ब्रिज वॉक", desc_en:"Short walk across the bridge then lunch at The Rocks.", desc_hi:"ब्रिज पार छोटी सैर और फिर द रॉक्स में दोपहर का खाना।", lat:-33.8523, lng:151.2108, mapLabel:"Harbour Bridge" },
+
+    // Day 2
+    { id: "d2e1", day: "Day 2 — 2025-10-02", time: "10:00", title_en:"Royal Botanic Garden", title_hi:"रॉयल बॉटेनिक गार्डन", desc_en:"Relaxing morning walk and bird watching.", desc_hi:"सुबह की सैर और पक्षी देखना।", lat:-33.8642, lng:151.2166, mapLabel:"Royal Botanic Garden" },
+    { id: "d2e2", day: "Day 2 — 2025-10-02", time: "14:00", title_en:"Museum of Contemporary Art", title_hi:"आधुनिक कला संग्रहालय", desc_en:"Exhibition opens at 2pm. Tickets optional.", desc_hi:"प्रदर्शनी दोपहर 2 बजे खुलती है। टिकट वैकल्पिक।", lat:-33.8600, lng:151.2094, mapLabel:"MCA" }
+  ],
+
+  gallery: [
+    { id:"g1", src:"https://upload.wikimedia.org/wikipedia/commons/4/4e/Sydney_Opera_House_-_Dec_2008.jpg", caption_en:"Opera House view", caption_hi:"ओपेरा हाउस दृश्य" },
+    { id:"g2", src:"https://upload.wikimedia.org/wikipedia/commons/6/66/Sydney_Harbour_Bridge_from_Mrs_Macquaries_Point.jpg", caption_en:"Harbour Bridge", caption_hi:"हार्बर ब्रिज" }
+  ]
+};
+/* ----------------- end content ----------------- */
+
+let lang = 'en'; // 'en' or 'hi'
+
+/* UI elements */
+const langToggle = document.getElementById('langToggle');
+const hdrTitle = document.getElementById('hdr-title');
+const homeWelcome = document.getElementById('home-welcome');
+const homeSub = document.getElementById('home-sub');
+const itineraryArea = document.getElementById('itineraryArea');
+const galleryEl = document.getElementById('gallery');
+const modal = document.getElementById('modal');
+const modalTitle = document.getElementById('modal-title');
+const modalDesc = document.getElementById('modal-desc');
+const modalHindi = document.getElementById('modal-hindi');
+const mapLink = document.getElementById('mapLink');
+const printBtn = document.getElementById('printBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+const openMapBtn = document.getElementById('openMapBtn');
+const openGalleryBtn = document.getElementById('openGalleryBtn');
+const shareBtn = document.getElementById('shareBtn');
+const closeModal = document.getElementById('closeModal');
+
+// language toggle
+langToggle.addEventListener('click', ()=> {
+  lang = (lang==='en') ? 'hi' : 'en';
+  langToggle.textContent = (lang==='en') ? 'हिंदी' : 'English';
+  renderAll();
+});
+
+/* Build itinerary grouped by day */
+function groupByDay(items){
+  const map = {};
+  items.forEach(it => {
+    if(!map[it.day]) map[it.day] = [];
+    map[it.day].push(it);
+  });
+  return map;
+}
+
+function openModal(item){
+  modal.classList.add('open');
+  modalTitle.textContent = (lang==='en') ? item.title_en : item.title_hi || item.title_en;
+  modalDesc.textContent = (lang==='en') ? item.desc_en : item.desc_hi || item.desc_en;
+  modalHindi.style.display = (lang==='en' && item.title_hi) ? 'block' : (lang==='hi' ? 'block' : 'none');
+  modalHindi.textContent = (lang==='en') ? `हिन्दी: ${item.title_hi} — ${item.desc_hi || ''}` : '';
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.lat + ',' + item.lng)}&query_place_id=${encodeURIComponent(item.mapLabel||'')}`;
+  mapLink.href = mapsUrl;
+  mapLink.textContent = (lang==='en') ? 'Open in Maps' : 'मैप में देखें';
+}
+
+closeModal.addEventListener('click', ()=> modal.classList.remove('open'));
+modal.addEventListener('click', (e)=>{ if(e.target===modal) modal.classList.remove('open'); });
+
+function renderItinerary(){
+  const grouped = groupByDay(DATA.itinerary);
+  itineraryArea.innerHTML = '';
+  for(const day of Object.keys(grouped)){
+    const dayBox = document.createElement('div');
+    dayBox.className = 'itinerary-day';
+    const dayTitle = document.createElement('div');
+    dayTitle.innerHTML = `<strong style="font-size:15px">${day}</strong>`;
+    dayBox.appendChild(dayTitle);
+
+    grouped[day].forEach(evt => {
+      const ev = document.createElement('div');
+      ev.className = 'event';
+      ev.tabIndex = 0;
+      ev.innerHTML = `<div class="time">${evt.time}</div>
+        <div>
+          <div class="name">${(lang==='en')?evt.title_en:evt.title_hi||evt.title_en}</div>
+          <small>${(lang==='en')?evt.desc_en.slice(0,60):evt.desc_hi?evt.desc_hi.slice(0,60):evt.desc_en.slice(0,60)}…</small>
+        </div>`;
+      ev.addEventListener('click', ()=> openModal(evt));
+      ev.addEventListener('keypress', (e)=> { if(e.key==='Enter') openModal(evt); });
+      dayBox.appendChild(ev);
+    });
+    itineraryArea.appendChild(dayBox);
+  }
+}
+
+function renderGallery(){
+  galleryEl.innerHTML = '';
+  DATA.gallery.forEach(pic => {
+    const img = document.createElement('img');
+    img.src = pic.src;
+    img.alt = (lang==='en')?pic.caption_en:pic.caption_hi||pic.caption_en;
+    img.addEventListener('click', ()=> {
+      const html = `<div style="text-align:center">
+        <h3>${(lang==='en')?pic.caption_en:pic.caption_hi||pic.caption_en}</h3>
+        <img src="${pic.src}" style="width:100%;max-width:720px;border-radius:8px" />
+      </div>`;
+      modal.classList.add('open');
+      modalTitle.textContent = (lang==='en')?pic.caption_en:pic.caption_hi||pic.caption_en;
+      modalDesc.innerHTML = '';
+      modalHindi.style.display='none';
+      mapLink.href = '#';
+      mapLink.style.display='none';
+    });
+    galleryEl.appendChild(img);
+  });
+}
+
+function renderAll(){
+  hdrTitle.textContent = (lang==='en') ? DATA.meta.tripName_en : DATA.meta.tripName_hi;
+  homeWelcome.textContent = (lang==='en') ? 'Welcome' : 'स्वागत है';
+  homeSub.textContent = (lang==='en') ? "Tap a day to open events" : "किसी दिन पर टैप करें";
+  document.getElementById('gallery-title').textContent = (lang==='en') ? 'Photo Journal' : 'फोटो जर्नल';
+  document.getElementById('gallery-sub').textContent = (lang==='en') ? 'Tap to view full size' : 'पूर्ण आकार देखने के लिए टैप करें';
+  document.getElementById('quick-title').textContent = (lang==='en') ? 'Quick Actions' : 'त्वरित क्रियाएँ';
+  document.getElementById('map-btn-text').textContent = (lang==='en') ? 'Open Map' : 'मैप खोलें';
+  document.getElementById('gallery-btn-text').textContent = (lang==='en') ? 'Open Gallery' : 'गैलरी खोलें';
+  renderItinerary();
+  renderGallery();
+  mapLink.style.display='inline-block';
+}
+
+printBtn.addEventListener('click', ()=> window.print());
+downloadBtn.addEventListener('click', ()=> {
+  // simple download: create a printable HTML file snapshot
+  const content = document.documentElement.outerHTML;
+  const blob = new Blob([content], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'SydneyTripPlanner.html'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+openMapBtn.addEventListener('click', ()=> {
+  // open google maps search with all lat/lngs
+  const queries = DATA.itinerary.map(it => `${it.lat},${it.lng}`).join('|');
+  const url = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(DATA.itinerary[0].lat + ',' + DATA.itinerary[0].lng);
+  window.open(url, '_blank');
+});
+
+openGalleryBtn.addEventListener('click', ()=> {
+  // simple: scroll to gallery and focus
+  galleryEl.scrollIntoView({behavior:'smooth'});
+});
+
+shareBtn.addEventListener('click', ()=>{
+  const text = `${modalTitle.textContent}\n${modalDesc.textContent}\n`;
+  navigator.clipboard?.writeText(text).then(()=> alert((lang==='en')? 'Copied to clipboard' : 'क्लिपबोर्ड पर कॉपी किया गया'));
+});
+
+/* initial render */
+renderAll();
+</script>
+</body>
+</html>
