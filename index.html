@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ROVER WANG – Mobile</title>
+<style>
+  /* General Styles */
+  body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #fff;
+    color: #000;
+    overflow-x: hidden;
+  }
+
+  /* Splash */
+  #splash {
+    position: fixed; top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: #fff;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    z-index: 9999;
+    animation: fadeOut 1.5s ease 1.5s forwards;
+  }
+  @keyframes fadeOut {
+    to { opacity: 0; visibility: hidden; }
+  }
+
+  /* Header */
+  header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 12px;
+    background: #000; color: #fff;
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 50;
+    transform: translateY(-100%);
+    transition: transform 0.4s;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  header.show { transform: translateY(0); }
+  .logo { font-size: 1.3rem; font-weight: bold; }
+  #langBtn {
+    font-size: 0.8rem;
+    cursor: pointer;
+    border: 1px solid #fff;
+    background: none;
+    padding: 4px 8px;
+    border-radius: 5px;
+    color: #fff;
+  }
+
+  /* Main content */
+  main { padding-top: 60px; padding-left: 10px; padding-right: 10px; box-sizing: border-box; }
+  .page { display: none; padding-top: 10px; box-sizing: border-box; }
+  .page.active { display: block; }
+
+  /* Itinerary Grid */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    justify-items: center;
+    margin: 0 auto;
+    max-width: 100%;
+  }
+  .day-box {
+    background: #f2f2f2;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    border-radius: 14px;
+    overflow: hidden;
+    width: 100%;
+    font-size: 1rem;
+  }
+  .day-title { font-weight: bold; margin-bottom: 4px; }
+  .day-date { font-size: 0.9rem; margin-bottom: 6px; }
+  .day-details { font-size: 0.9rem; opacity: 1; max-height: none; }
+
+  /* Gallery */
+  .gallery-grid {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    justify-content: center; align-items: center;
+  }
+  .gallery-grid img {
+    width: 90vw;
+    max-width: 100%;
+    height: auto;
+    object-fit: cover;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: transform 0.3s;
+  }
+  .gallery-grid img:hover { transform: scale(1.03); }
+
+  /* Maps */
+  .maps-container {
+    position: relative;
+    width: 100%;
+    height: 80vh;
+    margin: 0; padding: 0; overflow: hidden;
+  }
+  .responsive-map-iframe {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    z-index: 1;
+  }
+  .map-search {
+    position: absolute;
+    top: 12vw;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 92vw;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    background: rgba(255,255,255,0.95);
+    padding: 8px;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+    z-index: 10;
+  }
+  .map-search input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+  }
+  .map-search button {
+    padding: 10px 14px;
+    border: none;
+    background: #000;
+    color: #fff;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+  }
+  .map-search button:hover { background: #444; }
+
+  .clear-btn {
+    display: none;
+  }
+  .suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0; right: 0;
+    background: #fff;
+    border: 1px solid #ccc;
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    border-radius: 0 0 10px 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.09);
+  }
+  .suggestions div { padding: 10px 18px; cursor: pointer; }
+  .suggestions div:hover { background: #ececec; }
+
+  /* Navigation */
+  nav {
+    position: fixed;
+    bottom: 0; left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    background: #000;
+    color: #fff;
+    padding: 8px 0;
+    z-index: 50;
+    box-sizing: border-box;
+  }
+  nav button {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 6px;
+    transition: background 0.3s;
+  }
+  nav button:hover { background: #444; border-radius: 5px; }
+</style>
+</head>
+
+<body>
+<div id="splash"><h1>RW</h1><h2>ROVER WANG</h2></div>
+
+<header id="mainHeader">
+  <div class="logo">RW</div>
+  <button id="langBtn">HI</button>
+</header>
+
+<main>
+  <!-- Itinerary Page -->
+  <section id="page-itinerary" class="page active">
+    <div class="grid" id="itineraryGrid"></div>
+  </section>
+
+  <!-- Gallery Page -->
+  <section id="page-gallery" class="page">
+    <div class="gallery-grid">
+      <img src="https://via.placeholder.com/200x150" alt="Gallery Image 1" />
+      <img src="https://via.placeholder.com/200x150" alt="Gallery Image 2" />
+      <img src="https://via.placeholder.com/200x150" alt="Gallery Image 3" />
+    </div>
+  </section>
+
+  <!-- Maps Page -->
+  <section id="page-maps" class="page" style="padding: 0;">
+    <div class="maps-container">
+      <form class="map-search" id="mapSearchForm" autocomplete="off" onsubmit="return false;">
+        <input type="search" id="mapSearchInput" placeholder="Search place…" autocomplete="off" />
+        <button type="submit" id="mapSearchBtn">Go</button>
+        <div class="suggestions" id="autocompleteSuggestions" style="display:none"></div>
+      </form>
+      <iframe id="mapFrame" class="responsive-map-iframe"
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d13230.353504310997!2d151.2100!3d-33.8570!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6b12ae6c3b66f27d%3A0x53cbcf2e74d8b573!2sSydney%20Opera%20House!5e0!3m2!1sen!2sau!4v1695970800000"
+        allowfullscreen loading="lazy"></iframe>
+    </div>
+  </section>
+</main>
+
+<nav>
+  <button data-page="page-itinerary">ITINERARY</button>
+  <button data-page="page-gallery">GALLERY</button>
+  <button data-page="page-maps">MAPS</button>
+</nav>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places"></script>
+<script>
+setTimeout(() => { document.getElementById("mainHeader").classList.add("show"); }, 1500);
+
+/* Itinerary Grid */
+const startDate = new Date("2025-10-12");
+const details = [
+  "Arrival and check-in at hotel. Visit Circular Quay in the evening.",
+  "Opera House tour at 10 AM. Lunch at The Rocks. Ferry to Manly.",
+  "Blue Mountains day trip. Scenic World rides.",
+  "Taronga Zoo visit. Afternoon at Bondi Beach.",
+  "Museum of Contemporary Art. Dinner at Darling Harbour.",
+  "Harbour Bridge climb. Explore Barangaroo.",
+  "Day trip to Hunter Valley wine region.",
+  "Shopping at Pitt Street Mall. Evening show at Opera House.",
+  "Royal Botanic Gardens walk. Sydney Tower Eye.",
+  "Day trip to Canberra.",
+  "Relaxation day at Coogee Beach.",
+  "Sea Life Aquarium. Madame Tussauds.",
+  "Departure day and souvenir shopping.",
+];
+const itineraryGrid = document.getElementById("itineraryGrid");
+for(let i = 0; i < details.length; i++) {
+  const d = new Date(startDate); d.setDate(d.getDate() + i);
+  const box = document.createElement("div");
+  box.className = "day-box";
+  box.innerHTML = `
+    <div class="day-title">Day ${i + 1}</div>
+    <div class="day-date">${d.getDate()}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d.getFullYear()}</div>
+    <div class="day-details">${details[i]}</div>
+  `;
+  itineraryGrid.appendChild(box);
+}
+
+/* Navigation */
+document.querySelectorAll("nav button").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+    document.getElementById(btn.dataset.page).classList.add("active");
+  });
+});
+
+/* Map Search */
+const input = document.getElementById("mapSearchInput");
+const suggestionsDiv = document.getElementById("autocompleteSuggestions");
+let autocompleteService, currentSuggestions = [];
+if(window.google && google.maps && google.maps.places){
+  autocompleteService = new google.maps.places.AutocompleteService();
+}
+input.addEventListener("input", () => {
+  const val = input.value.trim();
+  if(!val || !autocompleteService){ suggestionsDiv.style.display="none"; suggestionsDiv.innerHTML=""; return; }
+  autocompleteService.getPlacePredictions({input: val}, (predictions, status) => {
+    if(status !== google.maps.places.PlacesServiceStatus.OK || !predictions.length){ suggestionsDiv.style.display="none"; suggestionsDiv.innerHTML=""; return; }
+    suggestionsDiv.innerHTML="";
+    predictions.forEach((p)=>{
+      const div = document.createElement("div");
+      div.textContent = p.description;
+      div.onclick = () => { input.value=p.description; suggestionsDiv.style.display="none"; openPlace(p.description); };
+      suggestionsDiv.appendChild(div);
+    });
+    suggestionsDiv.style.display="block";
+  });
+});
+function openPlace(place){ if(place){ document.getElementById("mapFrame").src=`https://www.google.com/maps?q=${encodeURIComponent(place)}&output=embed`; } }
+
+/* Language Toggle */
+const languageButton = document.getElementById("langBtn");
+const languageData = {
+  HI:{ itinerary:[
+    "आगमन और होटल में चेक-इन। शाम को सर्कुलर क्वे देखें।",
+    "सुबह 10 बजे ओपरा हाउस टूर। लंच द रॉक्स में। मन्नली के लिए फेरी।",
+    "ब्लू माउंटेन का एक दिवसीय भ्रमण। सीनिक वर्ल्ड की सवारी।",
+    "तरोंगा ज़ू यात्रा। दोपहर को बॉन्डी बीच।",
+    "मॉडर्न आर्ट का संग्रहालय। डार्लिंग हार्बर में डिनर।",
+    "हार्बर ब्रिज पर चढ़ाई। बारंगारू का अन्वेषण।",
+    "हंटर वैली शराब क्षेत्र की एक दिन की यात्रा।",
+    "पिट स्ट्रीट मॉल में खरीदारी। ओपेरा हाउस में शाम का शो।",
+    "रॉयल बोटैनिक गार्डन की सैर। सिडनी टॉवर आई।",
+    "कैनबरा की एक दिवसीय यात्रा।",
+    "कूजी बीच पर विश्राम दिवस।",
+    "सी लाइफ एक्वेरियम। मैडम टुसॉड्स।",
+    "विदाई का दिन और स्मारिका खरीदारी।"
+  ]},
+  EN:{ itinerary: details }
+};
+let currentLang="EN";
+languageButton.addEventListener("click", ()=>{
+  currentLang=currentLang==="EN"?"HI":"EN";
+  const boxes=document.querySelectorAll(".day-box .day-details");
+  boxes.forEach((b,i)=>{ b.textContent = languageData[currentLang].itinerary[i]; });
+  languageButton.textContent=currentLang==="EN"?"HI":"EN";
+});
+</script>
+</body>
+</html>
